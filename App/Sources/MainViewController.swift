@@ -4,6 +4,7 @@ import WebKit
 /// One full-screen web view showing the bundled calculator (App/Resources/www/index.html).
 final class MainViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     private var webView: WKWebView!
+    private var shareBridge: ShareBridge?
 
     override var prefersStatusBarHidden: Bool { false }
     // The page keeps a brown top bar in both light and dark themes, so the status bar text is always light.
@@ -19,6 +20,11 @@ final class MainViewController: UIViewController, WKNavigationDelegate, WKUIDele
         let pagePreferences = WKWebpagePreferences()
         pagePreferences.allowsContentJavaScript = true
         configuration.defaultWebpagePreferences = pagePreferences
+
+        // Share bridge: window.webkit.messageHandlers.native.postMessage({type:"share", ...}) opens the system share sheet.
+        let bridge = ShareBridge(viewController: self)
+        shareBridge = bridge
+        configuration.userContentController.add(bridge, name: ShareBridge.handlerName)
 
         let webView = WKWebView(frame: view.bounds, configuration: configuration)
         webView.navigationDelegate = self

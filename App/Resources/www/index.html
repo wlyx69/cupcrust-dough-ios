@@ -237,6 +237,19 @@ h2{margin:0;font-size:19px;font-weight:700;line-height:1.3}
 .copysheet-in h3{margin:0 0 8px;font-size:16px}
 .copybox{width:100%;min-height:200px;border:1px solid var(--line);border-radius:14px;background:var(--sunk);padding:10px;font:14px/1.6 var(--font);resize:none;color:var(--ink)}
 
+
+/* ---- share chooser ---- */
+.sharesheet{position:fixed;inset:0;z-index:60;background:rgba(26,17,13,.5);display:flex;align-items:flex-end}
+.sharesheet-in{width:100%;background:var(--surface);color:var(--ink);border-radius:22px 22px 0 0;padding:16px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+.sharesheet-in h3{margin:0 0 12px;font-size:17px}
+.sopts{display:flex;flex-direction:column;gap:8px}
+.sopt{display:block;width:100%;text-align:start;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:16px;padding:12px 14px;transition:background .12s}
+.sopt:active{background:var(--sunk)}
+.sopt b{display:block;font-size:15.5px;font-weight:700}
+.sopt small{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.sopt[disabled]{opacity:.5}
+.sharesheet-in>.btn{width:100%;margin-top:10px}
+
 /* ---- drawer ---- */
 .scrim{position:fixed;inset:0;background:rgba(26,17,13,.45);z-index:40;opacity:0;transition:opacity .22s ease}
 .scrim.on{opacity:1}
@@ -439,6 +452,19 @@ h2{margin:0;font-size:19px;font-weight:700;line-height:1.3}
   </div>
 </div>
 
+<div class="sharesheet" id="sharesheet" hidden>
+  <div class="sharesheet-in" dir="rtl">
+    <h3 id="shareTitle">مشاركة المقادير</h3>
+    <div class="sopts">
+      <button type="button" class="sopt" data-fmt="pdf"><b>ملف PDF</b><small>ورقة A4 بهوية كب كرست — نفس شكل طلبيات الموردين</small></button>
+      <button type="button" class="sopt" data-fmt="png"><b>صورة</b><small>نفس الورقة كصورة، تنعرض مباشرة في واتساب</small></button>
+      <button type="button" class="sopt" data-fmt="text"><b>نص</b><small>قائمة نقاط تنلصق في أي محادثة</small></button>
+    </div>
+    <p class="msg" id="shareBusy" role="status"></p>
+    <button type="button" class="btn" id="shareCancel">إلغاء</button>
+  </div>
+</div>
+
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" dir="rtl" lang="ar" aria-label="القائمة" aria-hidden="true" hidden>
   <div class="dhead">
@@ -487,7 +513,7 @@ h2{margin:0;font-size:19px;font-weight:700;line-height:1.3}
       <p class="dmsg" id="resetMsg" role="status"></p>
     </div>
     <div class="dfoot">
-      <b>عجين الكوكيز</b> · الإصدار <span id="appVersion">2.1.0</span><br>
+      <b>عجين الكوكيز</b> · الإصدار <span id="appVersion">2.2.0</span><br>
       كل البيانات (الطلب، الأسعار، الطلبات المحفوظة) على هذا الجهاز بس.
     </div>
   </div>
@@ -979,6 +1005,263 @@ h2{margin:0;font-size:19px;font-weight:700;line-height:1.3}
     } catch (e) { fallback(); }
   }
   $("copyClose").addEventListener("click", function () { $("copysheet").hidden = true; });
+
+  // ---------- A4 sheets (PDF / image), same format as the supplier order PDFs ----------
+  var XP = { BR: "#47251C", CR: "#ECEBE6", PG: "#F2F1EC", INK: "#2B1D17", MU: "#8B7B71", LN: "#E1DED6", YL: "#FFC41D", WH: "#FFFFFF" };
+  var XF = "'IBM Plex Sans Arabic',sans-serif";
+  var DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+  var MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+  function longDate() { var d = new Date(); return DAYS[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear(); }
+  function loadFonts() {
+    if (!(document.fonts && document.fonts.load)) return Promise.resolve();
+    var L = [["400 40px 'IBM Plex Sans Arabic'", "التاريخ عدد 123"], ["500 40px 'IBM Plex Sans Arabic'", "كيس قالب علبة Kg 123"], ["700 40px 'IBM Plex Sans Arabic'", "الكمية الإجمالي ½ 0123456789"]];
+    var all = Promise.all(L.map(function (x) { return document.fonts.load(x[0], x[1]).catch(function () {}); }));
+    return Promise.race([all, new Promise(function (r) { setTimeout(r, 4000); })]);
+  }
+  var logoImg = null;
+  function loadLogo() {
+    if (logoImg) return Promise.resolve(logoImg);
+    return new Promise(function (res) {
+      var src = document.querySelector(".brand").outerHTML.replace(/currentColor/g, XP.CR).replace(/ class="[^"]*"/, "").replace(/ role="img"[^>]*?(?=>)/, "")
+        .replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" width="844.87" height="373.38" ');
+      var im = new Image();
+      im.onload = function () { logoImg = im; res(im); };
+      im.onerror = function () { res(null); };
+      im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(src);
+    });
+  }
+  function blobBytes(b) {
+    if (b.arrayBuffer) return b.arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
+    return new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { res(new Uint8Array(fr.result)); }; fr.onerror = rej; fr.readAsArrayBuffer(b); });
+  }
+  function canvasBlob(cv, type, q) {
+    return new Promise(function (res, rej) {
+      if (cv.toBlob) { cv.toBlob(function (b) { if (!b) { rej(new Error("blob")); return; } res(b); }, type, q); return; }
+      var s = atob(cv.toDataURL(type, q).split(",")[1]), a = new Uint8Array(s.length);
+      for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i);
+      res(new Blob([a], { type: type }));
+    });
+  }
+  // A minimal PDF: one JPEG per A4 page (same writer as the order page).
+  function pdfFromJpegs(pages, w, h) {
+    var parts = [], len = 0, off = [], N = pages.length, PW = "595.28", PH = "841.89";
+    function push(b) { if (typeof b === "string") { var a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i) & 255; b = a; } parts.push(b); len += b.length; }
+    push("%PDF-1.4\n"); push(new Uint8Array([37, 226, 227, 207, 211, 10]));
+    var kids = []; for (var k = 0; k < N; k++) kids.push((3 + 3 * k) + " 0 R");
+    off[1] = len; push("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+    off[2] = len; push("2 0 obj\n<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + N + " >>\nendobj\n");
+    for (k = 0; k < N; k++) {
+      var po = 3 + 3 * k, io = 4 + 3 * k, co = 5 + 3 * k, jpg = pages[k];
+      off[po] = len; push(po + " 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /XObject << /Im" + k + " " + io + " 0 R >> /ProcSet [/PDF /ImageC] >> /Contents " + co + " 0 R >>\nendobj\n");
+      off[io] = len; push(io + " 0 obj\n<< /Type /XObject /Subtype /Image /Width " + w + " /Height " + h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jpg.length + " >>\nstream\n"); push(jpg); push("\nendstream\nendobj\n");
+      var cs = "q\n" + PW + " 0 0 " + PH + " 0 0 cm\n/Im" + k + " Do\nQ\n";
+      off[co] = len; push(co + " 0 obj\n<< /Length " + cs.length + " >>\nstream\n" + cs + "endstream\nendobj\n");
+    }
+    var size = 3 + 3 * N, xref = len, x = "xref\n0 " + size + "\n0000000000 65535 f \n";
+    for (var i = 1; i < size; i++) { x += ("0000000000" + off[i]).slice(-10) + " 00000 n \n"; }
+    push(x); push("trailer\n<< /Size " + size + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF\n");
+    return new Blob(parts, { type: "application/pdf" });
+  }
+
+  // drawing helpers in millimetres on an A4 canvas
+  function painter(c, MM, PT) {
+    function X(mm) { return mm * MM; }
+    function fnt(o) { return (o.w || 400) + " " + (o.pt * PT).toFixed(1) + "px " + XF; }
+    var p = {
+      X: X,
+      txt: function (s, x, y, o) { c.save(); c.font = fnt(o); c.fillStyle = o.c || XP.INK; c.textAlign = o.a || "right"; c.direction = o.d || "rtl"; c.textBaseline = "middle"; if (o.al != null) c.globalAlpha = o.al; c.fillText(String(s), X(x), X(y)); c.restore(); },
+      tw: function (s, o) { c.save(); c.font = fnt(o); c.direction = o.d || "rtl"; var w = c.measureText(String(s)).width; c.restore(); return w / MM; },
+      rr: function (x, y, w, h, r) { x = X(x); y = X(y); w = X(w); h = X(h); r = X(r); c.beginPath(); c.moveTo(x + r, y); c.lineTo(x + w - r, y); c.arcTo(x + w, y, x + w, y + r, r); c.lineTo(x + w, y + h - r); c.arcTo(x + w, y + h, x + w - r, y + h, r); c.lineTo(x + r, y + h); c.arcTo(x, y + h, x, y + h - r, r); c.lineTo(x, y + r); c.arcTo(x, y, x + r, y, r); c.closePath(); },
+      fill: function (col) { c.fillStyle = col; c.fill(); },
+      rect: function (x, y, w, h, col) { c.fillStyle = col; c.fillRect(X(x), X(y), X(w), X(h)); },
+      line: function (x1, x2, y, col) { c.fillStyle = col || XP.LN; c.fillRect(X(x1), X(y), X(x2 - x1), Math.max(2, 0.5 * PT)); },
+      wrap: function (s, maxW, o, max) { if (p.tw(s, o) <= maxW) return [s]; var words = String(s).split(" "), out = [], cur = ""; words.forEach(function (wd) { var t = cur ? cur + " " + wd : wd; if (!cur || p.tw(t, o) <= maxW) cur = t; else { out.push(cur); cur = wd; } }); if (cur) out.push(cur); return out.slice(0, max || 2); },
+      img: function (im, x, y, w, h) { if (im) c.drawImage(im, X(x), X(y), X(w), X(h)); }
+    };
+    return p;
+  }
+  // shared header / footer (brown band, logo on the left, title on the right)
+  function drawFrame(p, title, sub, kv, footer, page, pages) {
+    p.rect(0, 0, 210, 297, XP.WH);
+    p.rect(0, 0, 210, 42, XP.BR);
+    p.txt(title, 197, 14, { w: 700, pt: 22, c: XP.CR });
+    p.txt("كب كرست · CupCrust", 197, 23.5, { w: 500, pt: 9.5, c: XP.CR, al: .8 });
+    if (sub) p.txt(sub, 197, 31, { w: 500, pt: 8.8, c: XP.CR, al: .9 });
+    p.img(logoImg, 13, 6, 40, 40 * 373.38 / 844.87);
+    var y = 29;
+    kv.forEach(function (row) {
+      var v = { w: 700, pt: 8.8, c: XP.CR, a: "left" }, k = { w: 400, pt: 8.2, c: XP.CR, al: .7, a: "left" };
+      p.txt(row[1], 13, y, v); p.txt(row[0], 13 + p.tw(row[1], v) + 2, y, k); y += 5.2;
+    });
+    if (pages > 1) p.txt("صفحة " + page + " / " + pages, 105, 36, { w: 500, pt: 8, c: XP.CR, a: "center", al: .8 });
+    p.rect(160, 41.2, 37, 1.6, XP.YL);
+    p.txt(footer, 197, 289, { w: 600, pt: 8.2, c: XP.INK });
+    p.txt("cupcrust.sa  ·  @ccrust1", 13, 289, { a: "left", d: "ltr", w: 500, pt: 8.2, c: XP.MU });
+  }
+
+  // 1) ingredients sheet
+  function drawIngredients(p, rows, start, last, page, pages) {
+    var act = active(), both = act.length === 2;
+    var totalKg = act.reduce(function (s, t) { return s + actualKg(t); }, 0), nb = act.reduce(function (s, t) { return s + batches(t); }, 0);
+    var sub = act.map(function (t) { return RECIPES[t].ar + " " + FK.format(kg[t]) + " كجم = " + bUnit(batches(t)); }).join("  ·  ");
+    drawFrame(p, "مقادير عجين الكوكيز", sub, [["التاريخ", longDate()], ["عجين الطلب", kgText(totalKg) + " كجم"], ["الوصفات", F0.format(nb)]], "كب كرست — مقادير عجين الكوكيز", page, pages);
+    // columns (mm, right to left)
+    var cNo = 196, cName = 189, cTot = both ? 38 : 45, cA = 118, cB = 80, oh = { w: 600, pt: 8.3, c: XP.MU };
+    var hy = 49;
+    p.txt("#", cNo, hy, { w: 600, pt: 8.3, c: XP.MU, a: "center" }); p.txt("المكوّن", cName, hy, oh);
+    if (both) { p.txt("كلاسيك", cA, hy, { w: 600, pt: 8.3, c: XP.MU, a: "center" }); p.txt("كندر", cB, hy, { w: 600, pt: 8.3, c: XP.MU, a: "center" }); }
+    p.txt(both ? "المجموع" : "الكمية", cTot, hy, { w: 600, pt: 8.3, c: XP.MU, a: "center" });
+    p.rect(10, 52, 190, 0.5, XP.BR);
+    var top = 53, bottom = last ? 232 : 283, h = Math.max(14, Math.min(19, (bottom - top) / Math.max(rows.length, 1))), y = top;
+    rows.forEach(function (key, i) {
+      var cy = y + h / 2;
+      p.txt(String(start + i + 1), cNo, cy, { a: "center", w: 700, pt: 12, c: XP.BR, d: "ltr" });
+      p.txt(ING[key].ar, cName, cy - 2.6, { w: 700, pt: 11, c: XP.INK });
+      p.txt(ING[key].en, cName, cy + 3.2, { w: 500, pt: 7.6, c: XP.MU, d: "ltr", a: "right" });
+      if (both) {
+        act.forEach(function (t, j) {
+          var cx = j === 0 ? cA : cB, q = inRecipe(t, key) ? cellParts(key, qty(t, key), batches(t), false) : null;
+          if (q) { p.txt(q[0], cx + 2, cy, { a: "right", w: 600, pt: 11, c: XP.INK, d: "ltr" }); p.txt(q[1], cx + 3.5, cy, { a: "left", w: 500, pt: 7.6, c: XP.MU }); }
+          else p.txt("—", cx, cy, { a: "center", w: 500, pt: 10, c: XP.MU });
+        });
+      }
+      var tp = cellParts(key, totalQty(key), totalBatchesWith(key), true);
+      var pw = 34, ph = Math.min(11, h - 4);
+      p.rr(cTot - pw / 2, cy - ph / 2, pw, ph, 2.6); p.fill(XP.CR);
+      if (tp) { p.txt(tp[0], cTot + 3, cy, { a: "right", w: 700, pt: 13, c: XP.BR, d: "ltr" }); p.txt(tp[1], cTot + 4.5, cy + 0.2, { a: "left", w: 600, pt: 7.8, c: XP.INK }); }
+      if (i < rows.length - 1) p.line(10, 200, y + h);
+      y += h;
+    });
+    p.rect(10, y + 0.6, 190, 0.35, XP.BR);
+    if (last) {
+      var by = y + 6;
+      p.rr(13, by, 184, 24 + (both ? 6 : 0), 3); p.fill(XP.CR);
+      p.txt("العجانة · " + mixer + " " + (mixer >= 2 && mixer <= 10 ? "وصفات" : "وصفة") + " بالجولة", 192, by + 6, { w: 700, pt: 10.5, c: XP.BR });
+      var ly = by + 13;
+      act.forEach(function (t) { p.txt(RECIPES[t].ar + ": " + split(batches(t)), 192, ly, { w: 500, pt: 9.5, c: XP.INK }); ly += 6; });
+      p.txt("الكميات بالتقريب العملي (أقرب نص كيلو / 10 جم) · الكيلو = عجين خام قبل الخبز · الوصفة = المقادير الأصلية مرة وحدة", 192, by + 24 + (both ? 6 : 0) + 6, { w: 500, pt: 7.8, c: XP.MU });
+    }
+  }
+
+  // 2) shopping sheet
+  function drawShop(p, rows, start, last, page, pages, sh) {
+    var act = active();
+    var sub = act.map(function (t) { return RECIPES[t].ar + " " + bUnit(batches(t)); }).join(" + ");
+    drawFrame(p, "قائمة شراء عجين الكوكيز", sub, [["التاريخ", longDate()], ["الأصناف", F0.format(sh.rows.length)], ["الإجمالي", F2.format(sh.bill) + " ر.س"]], "كب كرست — قائمة شراء عجين الكوكيز", page, pages);
+    var cNo = 196, cName = 189, cPack = 122, cQty = 72, cPrice = 44, cTotL = 13;
+    var hy = 49, oh = { w: 600, pt: 8.3, c: XP.MU };
+    p.txt("#", cNo, hy, { w: 600, pt: 8.3, c: XP.MU, a: "center" }); p.txt("الصنف", cName, hy, oh); p.txt("العبوة", cPack, hy, oh);
+    p.txt("الكمية", cQty, hy, { w: 600, pt: 8.3, c: XP.MU, a: "center" }); p.txt("سعر العبوة", cPrice, hy, { w: 600, pt: 8.3, c: XP.MU, a: "center" }); p.txt("الإجمالي", cTotL, hy, { w: 600, pt: 8.3, c: XP.MU, a: "left" });
+    p.rect(10, 52, 190, 0.5, XP.BR);
+    var top = 53, bottom = last ? 228 : 283, h = Math.max(15, Math.min(20, (bottom - top) / Math.max(rows.length, 1))), y = top;
+    rows.forEach(function (r, i) {
+      var cy = y + h / 2, need = cellText(r.key, r.g, r.nb, true);
+      p.txt(String(start + i + 1), cNo, cy, { a: "center", w: 700, pt: 12, c: XP.BR, d: "ltr" });
+      p.txt(ING[r.key].ar, cName, cy - 3, { w: 700, pt: 10.5, c: XP.INK });
+      p.txt("المطلوب " + need, cName, cy + 3.4, { w: 500, pt: 7.8, c: XP.MU });
+      var lbl = r.pi && r.pi.label ? r.pi.label : "—", ll = p.wrap(lbl, 40, { w: 500, pt: 8.8 });
+      ll.forEach(function (L, k) { p.txt(L, cPack, cy + (k - (ll.length - 1) / 2) * 4.4, { w: 500, pt: 8.8, c: XP.INK }); });
+      var qb = Math.min(11.5, h - 5);
+      p.rr(cQty - 10, cy - qb / 2, 20, qb, 2.4); p.fill(XP.CR);
+      if (r.pk != null) { p.txt(F0.format(r.pk), cQty, cy - qb * 0.17, { a: "center", w: 700, pt: 13, c: XP.BR, d: "ltr" }); p.txt(r.pk >= 3 && r.pk <= 10 ? "عبوات" : "عبوة", cQty, cy + qb * 0.27, { a: "center", w: 600, pt: 7.4, c: XP.INK }); }
+      else p.txt("—", cQty, cy, { a: "center", w: 500, pt: 10, c: XP.MU });
+      if (r.line == null) { p.txt("—", cPrice, cy, { a: "center", w: 500, pt: 9.5, c: XP.MU, d: "ltr" }); p.txt("بدون سعر", cTotL, cy, { a: "left", w: 500, pt: 8.2, c: XP.MU }); }
+      else { p.txt(F2.format(r.pi.price), cPrice, cy, { a: "center", w: 500, pt: 9.5, c: XP.INK, d: "ltr" }); p.txt(F2.format(r.line), cTotL, cy, { a: "left", w: 700, pt: 10.5, c: XP.INK, d: "ltr" }); }
+      if (i < rows.length - 1) p.line(10, 200, y + h);
+      y += h;
+    });
+    p.rect(10, y + 0.6, 190, 0.35, XP.BR);
+    if (last) {
+      var bx = 13, bw = 80, by = y + 6, rowH = 7, net = sh.bill / (1 + VAT);
+      p.rr(bx, by, bw, 3 * rowH + 4 + (sh.gaps.length ? 6 : 0), 3); p.fill(XP.CR);
+      var kx = bx + bw - 4, vx = bx + 4, o1 = { w: 500, pt: 9.2, c: XP.INK }, o2 = { w: 600, pt: 9.5, c: XP.INK, a: "left", d: "rtl" };
+      p.txt("قبل الضريبة", kx, by + 2 + rowH * 0.5, o1); p.txt(F2.format(net) + " ر.س", vx, by + 2 + rowH * 0.5, o2);
+      p.txt("ضريبة القيمة المضافة 15%", kx, by + 2 + rowH * 1.5, o1); p.txt(F2.format(sh.bill - net) + " ر.س", vx, by + 2 + rowH * 1.5, o2);
+      p.txt("الإجمالي شامل الضريبة", kx, by + 2 + rowH * 2.5, { w: 700, pt: 10.5, c: XP.BR }); p.txt(F2.format(sh.bill) + " ر.س", vx, by + 2 + rowH * 2.5, { w: 700, pt: 11, c: XP.BR, a: "left", d: "rtl" });
+      if (sh.gaps.length) p.txt("بدون سعر: " + sh.gaps.join("، "), kx, by + 2 + rowH * 3 + 2, { w: 500, pt: 8, c: XP.MU });
+      p.txt("الأسعار شاملة الضريبة من آخر فاتورة أو سعر سوق محفوظ في التطبيق.", 197, by + 4, { w: 500, pt: 8, c: XP.MU });
+      p.txt("الكميات بعبوات كاملة تغطي المطلوب · الأسعار النهائية حسب فاتورة المورد.", 197, by + 9, { w: 500, pt: 8, c: XP.MU });
+    }
+  }
+
+  var ROWS_PER_PAGE = 10;
+  function renderDoc(kind, fmt) {
+    var pagesSpec = [];
+    if (kind === "sheet") {
+      var keys = ORDER.filter(function (key) { return active().some(function (t) { return inRecipe(t, key); }); });
+      var n = Math.max(1, Math.ceil(keys.length / ROWS_PER_PAGE));
+      for (var i = 0; i < n; i++) pagesSpec.push({ rows: keys.slice(i * ROWS_PER_PAGE, (i + 1) * ROWS_PER_PAGE), start: i * ROWS_PER_PAGE, last: i === n - 1 });
+    } else {
+      var sh = shopping(), m = Math.max(1, Math.ceil(sh.rows.length / ROWS_PER_PAGE));
+      for (var j = 0; j < m; j++) pagesSpec.push({ rows: sh.rows.slice(j * ROWS_PER_PAGE, (j + 1) * ROWS_PER_PAGE), start: j * ROWS_PER_PAGE, last: j === m - 1, sh: sh });
+    }
+    var dpi = fmt === "pdf" ? 300 : 200, W = Math.round(210 / 25.4 * dpi), H = Math.round(297 / 25.4 * dpi);
+    return loadFonts().then(loadLogo).then(function () {
+      var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      var c = cv.getContext("2d"), p = painter(c, W / 210, dpi / 72), out = [];
+      function step(i) {
+        if (i >= pagesSpec.length) return Promise.resolve(out);
+        var ps = pagesSpec[i];
+        c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
+        if (kind === "sheet") drawIngredients(p, ps.rows, ps.start, ps.last, i + 1, pagesSpec.length);
+        else drawShop(p, ps.rows, ps.start, ps.last, i + 1, pagesSpec.length, ps.sh);
+        if (fmt === "pdf") return canvasBlob(cv, "image/jpeg", 0.9).then(blobBytes).then(function (bytes) { out.push(bytes); return step(i + 1); });
+        return canvasBlob(cv, "image/png").then(function (b) { out.push(b); return step(i + 1); });
+      }
+      return step(0);
+    }).then(function (out) {
+      var base = (kind === "sheet" ? "مقادير-عجين-الكوكيز" : "قائمة-شراء-عجين-الكوكيز") + "-" + today();
+      if (fmt === "pdf") return { blob: pdfFromJpegs(out, W, H), name: base + ".pdf", mime: "application/pdf" };
+      return { blob: out[0], name: base + (out.length > 1 ? "-1" : "") + ".png", mime: "image/png" };
+    });
+  }
+
+  // delivery: the app's native share sheet; otherwise the web share sheet; otherwise a download
+  var nativeShare = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.native;
+  function blobB64(b) { return new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { res(String(fr.result).split(",")[1]); }; fr.onerror = rej; fr.readAsDataURL(b); }); }
+  function deliver(res, title) {
+    if (nativeShare) return blobB64(res.blob).then(function (b64) { nativeShare.postMessage({ type: "share", name: res.name, mime: res.mime, data: b64 }); return "sent"; });
+    var file = null;
+    try { file = new File([res.blob], res.name, { type: res.mime }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], title: title }).then(function () { return "sent"; }, function (err) { if (err && err.name === "AbortError") return "cancel"; return download(res); });
+    }
+    return Promise.resolve(download(res));
+  }
+  function download(res) {
+    var a = document.createElement("a"), url = URL.createObjectURL(res.blob);
+    a.href = url; a.download = res.name; document.body.appendChild(a); a.click();
+    setTimeout(function () { a.remove(); URL.revokeObjectURL(url); }, 4000);
+    return "saved";
+  }
+
+  // share chooser
+  var shareKind = "sheet", shareBusy = false;
+  function openShare(kind) {
+    if (!active().length) { (kind === "sheet" ? $("sheetMsg") : $("shopMsg")).textContent = "الطلب فاضي."; return; }
+    if (kind === "shop" && pricesState !== "ready") { $("shopMsg").textContent = "قائمة الشراء تحتاج الأسعار."; return; }
+    shareKind = kind; $("shareTitle").textContent = kind === "sheet" ? "مشاركة المقادير" : "مشاركة قائمة الشراء";
+    $("shareBusy").textContent = ""; closeDrawer(); $("sharesheet").hidden = false;
+  }
+  function closeShare() { if (!shareBusy) $("sharesheet").hidden = true; }
+  $("shareCancel").addEventListener("click", closeShare);
+  $("sharesheet").addEventListener("click", function (e) { if (e.target === $("sharesheet")) closeShare(); });
+  $("sharesheet").addEventListener("click", function (e) {
+    var b = e.target.closest(".sopt"); if (!b || shareBusy) return;
+    var fmt = b.dataset.fmt, title = shareKind === "sheet" ? "مقادير عجين الكوكيز" : "قائمة شراء عجين الكوكيز";
+    var msgEl = shareKind === "sheet" ? $("sheetMsg") : $("shopMsg");
+    if (fmt === "text") { $("sharesheet").hidden = true; shareText(shareKind === "sheet" ? sheetText() : shopText(), title, msgEl); return; }
+    shareBusy = true; $("shareBusy").textContent = "أجهّز الملف…";
+    Array.prototype.forEach.call($("sharesheet").querySelectorAll(".sopt"), function (x) { x.disabled = true; });
+    renderDoc(shareKind, fmt).then(function (res) { return deliver(res, title); }).then(function (st) {
+      msgEl.textContent = st === "saved" ? "انحفظ الملف." : "";
+    }, function () { msgEl.textContent = "ما قدرت أجهّز الملف، جرّب مرة ثانية."; }).then(function () {
+      shareBusy = false; $("shareBusy").textContent = "";
+      Array.prototype.forEach.call($("sharesheet").querySelectorAll(".sopt"), function (x) { x.disabled = false; });
+      $("sharesheet").hidden = true;
+    });
+  });
+  window.__crustRender = renderDoc; // used by the headless test only
   $("copy").addEventListener("click", function () { copyText(sheetText(), $("copy"), "نسخ"); });
   $("copyShop").addEventListener("click", function () { copyText(shopText(), $("copyShop"), "نسخ"); });
   $("prows").addEventListener("input", onEdit);
@@ -1088,15 +1371,8 @@ h2{margin:0;font-size:19px;font-weight:700;line-height:1.3}
       navigator.clipboard.writeText(text).then(function () { msgEl.textContent = "انسخت النص، الصقه وين تبي."; }, function () { closeDrawer(); copyText(text, $("copy"), "نسخ المقادير"); });
     } catch (e) { closeDrawer(); copyText(text, $("copy"), "نسخ المقادير"); }
   }
-  $("shareSheet").addEventListener("click", function () {
-    if (!active().length) { $("shareMsg").textContent = "الطلب فاضي."; return; }
-    shareText(sheetText(), "مقادير عجين الكوكيز", $("shareMsg"));
-  });
-  $("shareShop").addEventListener("click", function () {
-    if (!active().length) { $("shareMsg").textContent = "الطلب فاضي."; return; }
-    if (pricesState !== "ready") { $("shareMsg").textContent = "قائمة الشراء تحتاج الأسعار."; return; }
-    shareText(shopText(), "قائمة شراء عجين الكوكيز", $("shareMsg"));
-  });
+  $("shareSheet").addEventListener("click", function () { if (!active().length) { $("shareMsg").textContent = "الطلب فاضي."; return; } openShare("sheet"); });
+  $("shareShop").addEventListener("click", function () { if (!active().length) { $("shareMsg").textContent = "الطلب فاضي."; return; } openShare("shop"); });
 
   // theme
   var THEME_KEY = "cupcrust-dough-theme";
@@ -1154,8 +1430,8 @@ h2{margin:0;font-size:19px;font-weight:700;line-height:1.3}
   $("goSheet").addEventListener("click", function () { showTab("sheet"); });
   $("editPrices").addEventListener("click", function () { openSub("prices"); });
   $("openMethod").addEventListener("click", function () { openSub("method"); });
-  $("shareSheetBtn").addEventListener("click", function () { if (active().length) shareText(sheetText(), "مقادير عجين الكوكيز", $("sheetMsg")); });
-  $("shareShopBtn").addEventListener("click", function () { if (active().length && pricesState === "ready") shareText(shopText(), "قائمة شراء عجين الكوكيز", $("shopMsg")); });
+  $("shareSheetBtn").addEventListener("click", function () { openShare("sheet"); });
+  $("shareShopBtn").addEventListener("click", function () { openShare("shop"); });
   showTab("order");
   renderChips();
 
