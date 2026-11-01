@@ -16,8 +16,8 @@ settings:
     CODE_SIGNING_ALLOWED: "NO"
     DEVELOPMENT_TEAM: ""
     ENABLE_BITCODE: "NO"
-    MARKETING_VERSION: "2.2.0"
-    CURRENT_PROJECT_VERSION: "6"
+    MARKETING_VERSION: "2.3.0"
+    CURRENT_PROJECT_VERSION: "7"
 targets:
   CrustDough:
     type: application
@@ -32,11 +32,11 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: sa.cupcrust.dough
         PRODUCT_NAME: CrustDough
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_CFBundleDisplayName: "عجين الكوكيز"
+        INFOPLIST_KEY_CFBundleDisplayName: "Cup Crust"
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: "عجين الكوكيز"
+        CFBundleDisplayName: "Cup Crust"
         CFBundleName: CrustDough
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
