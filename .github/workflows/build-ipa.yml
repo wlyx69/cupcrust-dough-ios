@@ -51,10 +51,13 @@ jobs:
         run: |
           APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -n 1)
           test -n "$APP_PATH"
+          # Start from a clean archive: zip would otherwise update the IPA committed in dist/ and keep stale files.
+          rm -rf dist/Payload dist/CrustDough-unsigned.ipa
           mkdir -p dist/Payload
           cp -R "$APP_PATH" dist/Payload/
           cd dist
           zip -qr CrustDough-unsigned.ipa Payload
+          unzip -l CrustDough-unsigned.ipa | tail -1
           ls -la CrustDough-unsigned.ipa
 
       - name: Upload artifact
