@@ -16,8 +16,8 @@ settings:
     CODE_SIGNING_ALLOWED: "NO"
     DEVELOPMENT_TEAM: ""
     ENABLE_BITCODE: "NO"
-    MARKETING_VERSION: "2.3.0"
-    CURRENT_PROJECT_VERSION: "7"
+    MARKETING_VERSION: "2.3.1"
+    CURRENT_PROJECT_VERSION: "8"
 targets:
   CrustDough:
     type: application
