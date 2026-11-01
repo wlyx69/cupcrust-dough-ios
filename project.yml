@@ -16,8 +16,8 @@ settings:
     CODE_SIGNING_ALLOWED: "NO"
     DEVELOPMENT_TEAM: ""
     ENABLE_BITCODE: "NO"
-    MARKETING_VERSION: "2.0.0"
-    CURRENT_PROJECT_VERSION: "4"
+    MARKETING_VERSION: "2.1.0"
+    CURRENT_PROJECT_VERSION: "5"
 targets:
   CrustDough:
     type: application
@@ -43,7 +43,8 @@ targets:
         CFBundleDevelopmentRegion: ar
         CFBundleLocalizations: [ar]
         LSRequiresIPhoneOS: true
-        UILaunchScreen: {}
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         UIRequiresFullScreen: true
         UIViewControllerBasedStatusBarAppearance: true
         UIUserInterfaceStyle: Automatic
