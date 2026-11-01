@@ -6,11 +6,13 @@ final class MainViewController: UIViewController, WKNavigationDelegate, WKUIDele
     private var webView: WKWebView!
 
     override var prefersStatusBarHidden: Bool { false }
-    override var preferredStatusBarStyle: UIStatusBarStyle { .default }
+    // The page keeps a brown top bar in both light and dark themes, so the status bar text is always light.
+    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.systemBackground
+        let brandBrown = UIColor(red: 0x47 / 255.0, green: 0x25 / 255.0, blue: 0x1C / 255.0, alpha: 1)
+        view.backgroundColor = brandBrown
 
         let configuration = WKWebViewConfiguration()
         configuration.setURLSchemeHandler(LocalSchemeHandler(), forURLScheme: LocalSchemeHandler.scheme)
@@ -22,8 +24,10 @@ final class MainViewController: UIViewController, WKNavigationDelegate, WKUIDele
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.isOpaque = false
-        webView.backgroundColor = UIColor.systemBackground
-        webView.scrollView.backgroundColor = UIColor.systemBackground
+        webView.backgroundColor = brandBrown
+        webView.scrollView.backgroundColor = brandBrown
+        // The page is an app shell (its own scrolling areas), so the outer web view must not rubber-band.
+        webView.scrollView.bounces = false
         // The page handles the status bar / home indicator itself (safe-area padding in its CSS).
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.allowsBackForwardNavigationGestures = false
