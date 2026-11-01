@@ -415,7 +415,7 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
       <p class="dmsg" id="resetMsg" role="status"></p>
     </div>
     <div class="dfoot">
-      <b>عجين الكوكيز</b> · الإصدار <span id="appVersion">1.1.0</span><br>
+      <b>عجين الكوكيز</b> · الإصدار <span id="appVersion">1.2.0</span><br>
       كل البيانات (الطلب، الأسعار، الطلبات المحفوظة) على هذا الجهاز بس.<br>
       الوصفة = المقادير الأصلية مرة وحدة · الكوب = 6 حبات × 15 جم
     </div>
@@ -431,7 +431,7 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
   // Display order follows the batch sheet: big items first.
   var ORDER = ["flour", "butter", "brown_sugar", "white_sugar", "choc_chips", "kinder", "eggs", "vanilla", "soda", "salt"];
   var ING = {
-    flour:       { ar: "دقيق منخول", en: "All-purpose flour", home: "كوب ونصف" },
+    flour:       { ar: "دقيق منخول", en: "Finah pastry flour", home: "كوب ونصف" },
     butter:      { ar: "زبدة غير مملحة", en: "Unsalted butter, cold", home: "نصف كوب" },
     brown_sugar: { ar: "سكر بني", en: "Brown sugar", home: "½ كوب" },
     white_sugar: { ar: "سكر أبيض", en: "White sugar", home: "ربع كوب" },
@@ -487,10 +487,21 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
   // Baseline dated 2026-11-01 (values carried over from the original page). Edits are kept in localStorage.
   var PRICE_KEY = "cupcrust-dough-prices-v1";
   var DEFAULT_UPDATED = "2026-11-01T07:00:00.000Z";
-  var DEFAULT_PRICES = {"brown_sugar": {"label": "كيس 1 كجم", "pack": 1000, "price": 16, "ref": false, "source": "فاتورة أضواء الفاكهة SI022600080678 · سبتمبر 2026"}, "butter": {"label": "كرتون 40 قالب (100 جم)", "pack": 4000, "price": 270.25, "ref": false, "source": "فاتورة أضواء الفاكهة SI022600080678 · سبتمبر 2026"}, "choc_chips": {"label": "كيس 5 كجم", "pack": 5000, "price": 207, "ref": false, "source": "المنتجات الجاهزة · عرض سعر 7039 · أغسطس 2026"}, "eggs": {"label": "طبق 30 بيضة", "pack": 30, "price": 18.25, "ref": true, "source": "سعر سوق: بيض قطينة كبير 30، العثيم (موقع كانبكام)"}, "flour": {"label": "كرتون 10 أكياس (1 كجم)", "pack": 10000, "price": 24.95, "ref": false, "source": "إيصال بنده طويق · أغسطس 2026"}, "kinder": {"label": "كيس ماكسي 231 جم", "pack": 231, "price": 40, "ref": true, "source": "سعر سوق: هنقرستيشن 120 ريال للـ3 أكياس (نفس المرجع في تكلفة أغسطس)"}, "salt": {"label": "كيس 1 كجم", "pack": 1000, "price": null, "ref": false, "source": ""}, "soda": {"label": "علبة 100 جم", "pack": 100, "price": 3.45, "ref": true, "source": "سعر سوق: بيكربونات رياض فود 100 جم (homeutensils.com.sa)"}, "vanilla": {"label": "شدة 12 علبة (28 جم)", "pack": 336, "price": 38, "ref": false, "source": "فاتورة أضواء الفاكهة SI022600080678 · سبتمبر 2026"}, "white_sugar": {"label": "كيس 5 كجم", "pack": 5000, "price": 22.45, "ref": true, "source": "سعر سوق: سكر الأسرة ناعم 5 كجم، كارفور (موقع كانبكام)"}};
+  var DEFAULT_PRICES = {"brown_sugar": {"label": "كيس 1 كجم", "pack": 1000, "price": 16, "ref": false, "source": "فاتورة أضواء الفاكهة SI022600080678 · سبتمبر 2026"}, "butter": {"label": "كرتون 40 قالب (100 جم)", "pack": 4000, "price": 270.25, "ref": false, "source": "فاتورة أضواء الفاكهة SI022600080678 · سبتمبر 2026"}, "choc_chips": {"label": "كيس 5 كجم", "pack": 5000, "price": 207, "ref": false, "source": "المنتجات الجاهزة · عرض سعر 7039 · أغسطس 2026"}, "eggs": {"label": "طبق 30 بيضة", "pack": 30, "price": 18.25, "ref": true, "source": "سعر سوق: بيض قطينة كبير 30، العثيم (موقع كانبكام)"}, "flour": {"label": "كيس فينه حلويات 1 كجم", "pack": 1000, "price": 4.99, "ref": false, "source": "سعر الشراء الحالي · نوفمبر 2026"}, "kinder": {"label": "كيس ماكسي 231 جم", "pack": 231, "price": 40, "ref": true, "source": "سعر سوق: هنقرستيشن 120 ريال للـ3 أكياس (نفس المرجع في تكلفة أغسطس)"}, "salt": {"label": "كيس 1 كجم", "pack": 1000, "price": null, "ref": false, "source": ""}, "soda": {"label": "علبة 100 جم", "pack": 100, "price": 3.45, "ref": true, "source": "سعر سوق: بيكربونات رياض فود 100 جم (homeutensils.com.sa)"}, "vanilla": {"label": "شدة 12 علبة (28 جم)", "pack": 336, "price": 38, "ref": false, "source": "فاتورة أضواء الفاكهة SI022600080678 · سبتمبر 2026"}, "white_sugar": {"label": "كيس 5 كجم", "pack": 5000, "price": 22.45, "ref": true, "source": "سعر سوق: سكر الأسرة ناعم 5 كجم، كارفور (موقع كانبكام)"}};
   var storedPrices = null;
   try { storedPrices = JSON.parse(localStorage.getItem(PRICE_KEY) || "null"); } catch (e) { storedPrices = null; }
   if (!storedPrices || typeof storedPrices.items !== "object") storedPrices = null;
+  if (storedPrices) {
+    // Entries the user edited in the app stay; the rest follow the baseline shipped with each app update.
+    var merged = {}, refreshed = false;
+    ORDER.forEach(function (k) {
+      var it = storedPrices.items[k];
+      if (it && typeof it.source === "string" && it.source.indexOf("عدّلته أنت") === 0) merged[k] = it;
+      else { merged[k] = DEFAULT_PRICES[k]; if (JSON.stringify(it || null) !== JSON.stringify(DEFAULT_PRICES[k])) refreshed = true; }
+    });
+    storedPrices.items = merged;
+    if (refreshed && !(storedPrices.updatedAt > DEFAULT_UPDATED)) storedPrices.updatedAt = DEFAULT_UPDATED;
+  }
   var prices = storedPrices ? storedPrices.items : DEFAULT_PRICES;
   var updatedAt = storedPrices ? (storedPrices.updatedAt || null) : DEFAULT_UPDATED;
   var pricesState = "ready", canWrite = true;
@@ -548,12 +559,19 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
   }
 
   // ---------- display of one quantity ----------
+  // Practical amounts, the way an order or a scale reads them: from 1 kg up to the nearest half kilo
+  // ("44½ كجم", no decimals), under 1 kg to the nearest 10 g (nearest 5 g under 100 g).
+  function kgText(k) { var halves = Math.round(k * 2); return F0.format(Math.floor(halves / 2)) + (halves % 2 ? "½" : ""); }
+  function practical(g) {
+    if (g >= 1000) return [kgText(g / 1000), "كجم"];
+    var step = g >= 100 ? 10 : 5;
+    return [F0.format(Math.max(step, Math.round(g / step) * step)), "جم"];
+  }
   function cellParts(key, g, nb, total) {
     if (!(g > 0)) return null;
     if (key === "eggs") return [F0.format(Math.round(g / EGG_G)), "حبة"];
     if (key === "vanilla") return [F0.format(nb * VAN_ML), "مل"];
-    if (total && g >= 1000) return [F2.format(g / 1000), "كجم"];
-    return [fmtG(g), "جم"];
+    return practical(g);
   }
   function cellText(key, g, nb, total) { var p = cellParts(key, g, nb, total); return p ? p[0] + " " + p[1] : "—"; }
 
@@ -567,8 +585,8 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
       if (!b) { m.textContent = "ما فيه " + RECIPES[t].ar + " في هذا الطلب."; return; }
       m.appendChild(h("span", "batches", bUnit(b)));
       m.append("تطلع ");
-      m.appendChild(h("b", "num", F2.format(actualKg(t))));
-      m.append(" كجم · العجانة: " + split(b));
+      m.appendChild(h("b", "num", kgText(actualKg(t))));
+      m.append(" كجم تقريبًا · العجانة: " + split(b));
     });
     $("mixVal").textContent = String(mixer);
   }
@@ -588,7 +606,7 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
       th.appendChild(h("small", null, bUnit(batches(t))));
       tr.appendChild(th);
     });
-    if (both) { var tt = h("th", "tot"); tt.append("المجموع"); tt.appendChild(h("small", null, F2.format(actualKg("classic") + actualKg("kinder")) + " كجم")); tr.appendChild(tt); }
+    if (both) { var tt = h("th", "tot"); tt.append("المجموع"); tt.appendChild(h("small", null, kgText(actualKg("classic") + actualKg("kinder")) + " كجم")); tr.appendChild(tt); }
     thead.appendChild(tr); tbl.appendChild(thead);
     var tb = h("tbody");
     ORDER.forEach(function (key) {
@@ -611,7 +629,7 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
   function sheetText() {
     var act = active(), both = act.length === 2, lines = ["*طلب عجين الكوكيز*"];
     act.forEach(function (t) {
-      lines.push("* " + RECIPES[t].ar + ": " + FK.format(kg[t]) + " كجم = " + bUnit(batches(t)) + " (تطلع " + F2.format(actualKg(t)) + " كجم)");
+      lines.push("* " + RECIPES[t].ar + ": " + FK.format(kg[t]) + " كجم = " + bUnit(batches(t)) + " (تطلع " + kgText(actualKg(t)) + " كجم تقريبًا)");
     });
     lines.push("");
     lines.push("*المقادير*");
